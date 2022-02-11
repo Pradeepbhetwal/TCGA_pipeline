@@ -29,7 +29,7 @@ def cip_segmentation(ct_image_file, output_file, metadata):
 
 
     levelset_file = output_file.replace("-label","-levelset")
-    nodule_segmentation_cip = osp.relpath('/home/wxc151/gitRepos/radiomics-tools/Tools/NoduleSegmentation_CIP/GenerateLesionSegmentation')
+    nodule_segmentation_cip = 'GenerateLesionSegmentation'
     p = subprocess.Popen(
         [nodule_segmentation_cip, '-i', ct_image_file, '-o', levelset_file, '--maximumRadius', str(metadata.iloc[0].length/2+3), partSolid, '--echo'] + seeds)
     p.wait()

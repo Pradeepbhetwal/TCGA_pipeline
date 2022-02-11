@@ -38,8 +38,9 @@ process dicom2nrrd {
 }
 
 process segmentation {
-    //echo true
+    echo true
     publishDir "${data_loc}/${ct.baseName.split("_")[0]}"
+    container 'acilbwh/chestimagingplatform:latest'
 
     input:
     file ct from ct_images
@@ -54,9 +55,9 @@ process segmentation {
     #!/usr/bin/env python
     import os
     import sys
-    sys.path.append("$projectDir")
+    sys.path.append("$projectDir/scripts")
     import pandas as pd
-    from scripts.segmentation import *
+    from segmentation import *
 
     anno = pd.read_csv("$annotations") \
                 .query("patientID=='${ct.baseName.split("_")[0]}'") # and radiologist_status=='radiologist'") \
