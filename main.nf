@@ -20,6 +20,8 @@ process metadata {
 
 process dicom2nrrd {
     publishDir "${data_loc}/${x.baseName}"
+    container 'wookjinchoi/radiomics-tools:latest'
+    containerOptions "--volume ${raw_data_loc}:${raw_data_loc}"
 
     input:
     path x from cases_ch
@@ -32,13 +34,13 @@ process dicom2nrrd {
     
     script:
     """
-    /home/wxc151/gitRepos/radiomics-tools/bin/DICOM2NRRDConverter $x output
+    DICOM2NRRDConverter $x output
     mv output/*/*.nrrd . && rm -rf output
     """
 }
 
 process segmentation {
-    echo true
+    //echo true
     publishDir "${data_loc}/${ct.baseName.split("_")[0]}"
     container 'acilbwh/chestimagingplatform:latest'
 
@@ -55,7 +57,7 @@ process segmentation {
     #!/usr/bin/env python
     import os
     import sys
-    sys.path.append("$projectDir/scripts")
+    sys.path.append("$projectDir/scripts") # python2
     import pandas as pd
     from segmentation import *
 
@@ -70,6 +72,7 @@ process segmentation {
 process feature_extraction {
     //echo true
     publishDir "${data_loc}/${ct.baseName.split("_")[0]}"
+    container 'wookjinchoi/radiomics-tools:latest'
 
     input:
     file ct from ct_images1
@@ -95,6 +98,7 @@ process feature_extraction {
 process feature_organization {
     //echo true
     publishDir "${data_loc}"
+    container 'wookjinchoi/radiomics-tools:latest'
 
     input:
     file x from features.collect()

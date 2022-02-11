@@ -3,11 +3,11 @@ import subprocess
 import os.path as osp
 
 
-feature_extractor = osp.relpath('/home/wxc151/gitRepos/radiomics-tools/bin/FeatureExtraction')
+feature_extractor = 'FeatureExtraction'
+image_resample = '/radiomics-tools/PythonTools/image_resample.py'
 iso_size = "1"
 
 def feature_extraction(image_file, mask_file, output_file):
-    image_resample = osp.relpath('/home/wxc151/gitRepos/radiomics-tools/Tools/PythonTools/image_resample.py')
     mask_file_resize = mask_file.replace("-label.nrrd", "-" + iso_size + "mm-label.nrrd")
     print(mask_file[0], mask_file_resize)
     image_file_resize = image_file.replace(".nrrd", "-" + iso_size + "mm.nrrd")
