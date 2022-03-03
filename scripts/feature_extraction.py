@@ -12,7 +12,7 @@ def feature_extraction(image_file, mask_file, output_file):
     print(mask_file[0], mask_file_resize)
     image_file_resize = image_file.replace(".nrrd", "-" + iso_size + "mm.nrrd")
     print(image_file, image_file_resize)
-    p = subprocess.Popen(["python", image_resample, mask_file, image_file_resize, iso_size, iso_size, iso_size])
+    p = subprocess.Popen(["python", image_resample, image_file, image_file_resize, iso_size, iso_size, iso_size])
     p.wait()
     p = subprocess.Popen(["python", image_resample, mask_file, mask_file_resize, image_file_resize, "1"])
     p.wait()
