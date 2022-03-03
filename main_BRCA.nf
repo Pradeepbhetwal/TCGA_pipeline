@@ -30,7 +30,7 @@ process dicom2nrrd {
             break
         fi
     done
-    mv "\$main_image_file" "${x.baseName}_MR.nrrd" && rm -rf output
+    mv "\$main_image_file" "${x.baseName}_MR.nrrd" # && rm -rf output
     """
 }
 
@@ -88,11 +88,13 @@ process segmentation {
                 image = sitk.ReadImage(MR_filename)
                 origin = image.GetOrigin()
                 spacing = image.GetSpacing()
-                start_idx = np.asarray([z_start, -int(x_start), y_start])
+                direction = mask.GetDirection()
+                start_idx = np.asarray([z_start, x_start, y_start])*np.asarray(direction).reshape(3,3).sum(1)
                 start = start_idx * spacing[::-1]
 
-                mask.SetOrigin(origin-start)
+                mask.SetOrigin(origin+start)
                 mask.SetSpacing(spacing)
+                mask.SetDirection(direction)
             
             return mask
 
@@ -103,9 +105,11 @@ process segmentation {
 }
 
 process feature_extraction {
-    //echo true
+    echo true
     publishDir "${data_loc}/${mr.baseName.split("_")[0]}"
     container 'wookjinchoi/radiomics-tools:latest'
+
+    errorStrategy 'ignore'
 
     input:
     file mr from mr_images1
@@ -113,6 +117,8 @@ process feature_extraction {
 
     output:
     file "${label.baseName}.txt" into features
+    file "${mr.baseName}-1mm.nrrd"
+    file "${mr.baseName}-1mm-label.nrrd"
 
     when:
     mr.baseName.split("_")[0] == label.baseName.split("_")[0]
