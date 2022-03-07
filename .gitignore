@@ -1,4 +1,5 @@
 .nextflow*
 .idea/*
 work/*
-data
+results
+

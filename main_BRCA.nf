@@ -1,24 +1,37 @@
+/*
+ * Default pipeline parameters. They can be overriden on the command line eg.
+ * given `params.foo` specify on the run command line `--foo some_value`.
+ */
+
+params.reads = "/data/apps/users/wxc151/manifest-AmUKkZHx1564984923148296294/TCGA-BRCA"
+params.les_loc = "/data/apps/users/wxc151/manifest-AmUKkZHx1564984923148296294/TCGA_Segmented_Lesions_UofC"
+params.outdir = "results"
+
+
+log.info """\
+ T C G A   B R C A - N F   P I P E L I N E
+ =========================================
+ reads        : ${params.reads}
+ outdir       : ${params.outdir}
+ """
+
 dataset = "TCGA-BRCA"
-raw_data_loc = "/data/apps/users/wxc151/manifest-AmUKkZHx1564984923148296294/TCGA-BRCA"
-les_loc = "/data/apps/users/wxc151/manifest-AmUKkZHx1564984923148296294/TCGA_Segmented_Lesions_UofC"
-data_loc = "${projectDir}/data/${dataset}/"
 
-Channel.fromPath( "${raw_data_loc}/TCGA*", type: 'dir').set{ cases_ch }
-
+Channel.fromPath("${params.reads}/TCGA*", type: 'dir').set{ cases_ch }
 
 process dicom2nrrd {
-    echo true
-    publishDir "${data_loc}/${x.baseName}"
+    //echo true
+    publishDir "${params.outdir}/${x.baseName}"
     container 'wookjinchoi/radiomics-tools:latest'
-    containerOptions "--volume ${raw_data_loc}:${raw_data_loc}"
+    containerOptions "--volume ${params.reads}:${params.reads} --volume ${params.les_loc}:${params.les_loc}"
 
     input:
     path x from cases_ch
-    path les_loc
+    path les from params.les_loc
 
     output:
     file "${x.baseName}_MR.nrrd" into mr_images
-    file "${les_loc}/${x.baseName}*.les" into lesions
+    file "${les}/${x.baseName}*.les" into lesions
     
     script:
     """
@@ -53,7 +66,7 @@ Please reference these data  extracted using version  V2010  of the UChicago MRI
 """
 process segmentation {
     //echo true
-    publishDir "${data_loc}/${mr.baseName.split("_")[0]}"
+    publishDir "${params.outdir}/${mr.baseName.split("_")[0]}"
 
     //errorStrategy 'ignore'
 
@@ -105,8 +118,8 @@ process segmentation {
 }
 
 process feature_extraction {
-    echo true
-    publishDir "${data_loc}/${mr.baseName.split("_")[0]}"
+    //echo true
+    publishDir "${params.outdir}/${mr.baseName.split("_")[0]}"
     container 'wookjinchoi/radiomics-tools:latest'
 
     errorStrategy 'ignore'
@@ -136,14 +149,14 @@ process feature_extraction {
 
 process feature_organization {
     //echo true
-    publishDir "${data_loc}"
+    publishDir "${params.outdir}"
     container 'wookjinchoi/radiomics-tools:latest'
 
     input:
     file x from features.collect()
 
     output:
-    file "features.csv"
+    file "features_${dataset}.csv"
 
     script:
     """
@@ -152,6 +165,6 @@ process feature_organization {
     sys.path.append("$projectDir")
     from scripts.organization import *
 
-    feature_organization("$x".split(" "), "features.csv")
+    feature_organization("$x".split(" "), "features_${dataset}.csv")
     """
 }

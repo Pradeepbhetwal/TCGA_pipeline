@@ -1,13 +1,25 @@
-dataset = "TCGA-LUAD"
-raw_data_loc = "/data/apps/users/wxc151/manifest-KTt2tScD7164745271364348431/TCGA-LUAD"
-data_loc = "${projectDir}/data/${dataset}/"
-annotations = "${data_loc}/annotations.csv" 
-clinical_data = "${data_loc}/clinical.csv" 
+/*
+ * Default pipeline parameters. They can be overriden on the command line eg.
+ * given `params.foo` specify on the run command line `--foo some_value`.
+ */
 
-Channel.fromPath("${raw_data_loc}/TCGA*", type: 'dir').set{ cases_ch }
+params.reads = "/data/apps/users/wxc151/manifest-KTt2tScD7164745271364348431/TCGA-LUAD"
+params.outdir = "results"
+
+
+log.info """\
+ T C G A   L U D A - N F   P I P E L I N E
+ =========================================
+ reads        : ${params.reads}
+ outdir       : ${params.outdir}
+ """
+
+dataset = "TCGA-LUAD"
+
+Channel.fromPath("${params.reads}/TCGA*", type: 'dir').set{ cases_ch }
 
 process metadata {
-    publishDir "${data_loc}"
+    publishDir "${params.outdir}"
 
     output:
     file "annotations.csv" into ann
@@ -19,9 +31,9 @@ process metadata {
 }
 
 process dicom2nrrd {
-    publishDir "${data_loc}/${x.baseName}"
+    publishDir "${params.outdir}/${x.baseName}"
     container 'wookjinchoi/radiomics-tools:latest'
-    containerOptions "--volume ${raw_data_loc}:${raw_data_loc}"
+    containerOptions "--volume ${params.reads}:${params.reads}"
 
     input:
     path x from cases_ch
@@ -41,7 +53,7 @@ process dicom2nrrd {
 
 process segmentation {
     //echo true
-    publishDir "${data_loc}/${ct.baseName.split("_")[0]}"
+    publishDir "${params.outdir}/${ct.baseName.split("_")[0]}"
     container 'acilbwh/chestimagingplatform:latest'
 
     input:
@@ -61,7 +73,7 @@ process segmentation {
     import pandas as pd
     from segmentation import *
 
-    anno = pd.read_csv("$annotations") \
+    anno = pd.read_csv("$a") \
                 .query("patientID=='${ct.baseName.split("_")[0]}'") # and radiologist_status=='radiologist'") \
                 .sort_values(by=['length'], ascending=False)
     
@@ -71,7 +83,7 @@ process segmentation {
 
 process feature_extraction {
     //echo true
-    publishDir "${data_loc}/${ct.baseName.split("_")[0]}"
+    publishDir "${params.outdir}/${ct.baseName.split("_")[0]}"
     container 'wookjinchoi/radiomics-tools:latest'
 
     input:
@@ -99,14 +111,14 @@ process feature_extraction {
 
 process feature_organization {
     //echo true
-    publishDir "${data_loc}"
+    publishDir "${params.outdir}"
     container 'wookjinchoi/radiomics-tools:latest'
 
     input:
     file x from features.collect()
 
     output:
-    file "features.csv"
+    file "features_${dataset}.csv"
 
     script:
     """
@@ -115,6 +127,6 @@ process feature_organization {
     sys.path.append("$projectDir")
     from scripts.organization import *
 
-    feature_organization("$x".split(" "), "features.csv")
+    feature_organization("$x".split(" "), "features_${dataset}.csv")
     """
 }
