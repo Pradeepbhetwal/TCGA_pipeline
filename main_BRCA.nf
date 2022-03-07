@@ -121,6 +121,7 @@ process feature_extraction {
     //echo true
     publishDir "${params.outdir}/${mr.baseName.split("_")[0]}"
     container 'wookjinchoi/radiomics-tools:latest'
+    containerOptions "--volume ${projectDir}:${projectDir}"
 
     errorStrategy 'ignore'
 
@@ -151,6 +152,7 @@ process feature_organization {
     //echo true
     publishDir "${params.outdir}"
     container 'wookjinchoi/radiomics-tools:latest'
+    containerOptions "--volume ${projectDir}:${projectDir}"
 
     input:
     file x from features.collect()

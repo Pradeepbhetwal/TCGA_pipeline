@@ -55,6 +55,7 @@ process segmentation {
     //echo true
     publishDir "${params.outdir}/${ct.baseName.split("_")[0]}"
     container 'acilbwh/chestimagingplatform:latest'
+    containerOptions "--volume ${projectDir}:${projectDir}"
 
     input:
     file ct from ct_images
@@ -85,6 +86,7 @@ process feature_extraction {
     //echo true
     publishDir "${params.outdir}/${ct.baseName.split("_")[0]}"
     container 'wookjinchoi/radiomics-tools:latest'
+    containerOptions "--volume ${projectDir}:${projectDir}"
 
     input:
     file ct from ct_images1
