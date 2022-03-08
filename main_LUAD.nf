@@ -115,6 +115,7 @@ process feature_organization {
     //echo true
     publishDir "${params.outdir}"
     container 'wookjinchoi/radiomics-tools:latest'
+    containerOptions "--volume ${projectDir}:${projectDir}"
 
     input:
     file x from features.collect()
